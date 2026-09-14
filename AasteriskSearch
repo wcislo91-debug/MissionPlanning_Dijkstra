@@ -1,0 +1,82 @@
+# For a given graph, origin vertex key, and goal vertex key,
+# computes the shortest path in the graph from the origin vertex
+# to the goal vertex using A* search. 
+# Returns the shortest path as a list of vertex keys.
+def a_star_search(origin_key, goal_key, graph):
+    # The priority queue of open vertices we've reached.
+    # Keys are the vertex keys, vals are the accumulated
+    # distances plus the heuristic estimates of the distance
+    # to go.
+    open_queue = priority_dict.priority_dict({})
+    
+    # The dictionary of closed vertices we've processed.
+    closed_dict = {}
+    
+    # The dictionary of predecessors for each vertex.
+    predecessors = {}
+    
+    # The dictionary that stores the best cost to reach each
+    # vertex found so far.
+    costs = {}
+    
+    # Get the spatial data for each vertex as a dictionary.
+    node_data = graph.nodes(True)
+    
+    # Add the origin to the open queue and the costs dictionary.
+    costs[origin_key] = 0.0
+    open_queue[origin_key] = distance_heuristic(origin_key, goal_key, node_data)
+
+    # Iterate through the open queue, until we find the goal.
+    # Each time, perform an A* update on the queue.
+    # TODO: Implement the A* update loop.
+    goal_found = False
+    while open_queue:
+
+        # --- Handle priority_dict variants safely ---
+        item = open_queue.smallest()
+
+        if isinstance(item, tuple) and len(item) == 2:
+            current_vertex, f_score = item
+        else:
+            current_vertex = item
+            f_score = open_queue[current_vertex]
+
+        # Remove from queue
+        del open_queue[current_vertex]
+
+        # Finalize vertex
+        closed_dict[current_vertex] = f_score
+
+        # Goal reached
+        if current_vertex == goal_key:
+            goal_found = True
+            break
+
+        # --- Relax outgoing edges ---
+        for _, neighbor, data in graph.out_edges(current_vertex, data=True):
+
+            weight = data.get("length", 1.0)
+            tentative_g = costs[current_vertex] + weight
+
+            # Skip if neighbor already finalized
+            if neighbor in closed_dict:
+                continue
+
+            # If new path is better OR neighbor unseen
+            if (neighbor not in costs) or (tentative_g < costs[neighbor]):
+                costs[neighbor] = tentative_g
+                predecessors[neighbor] = current_vertex
+
+                # f = g + h
+                h = distance_heuristic(neighbor, goal_key, node_data)
+                f = tentative_g + h
+
+                open_queue[neighbor] = f
+    
+    # If we get through entire priority queue without finding the goal,
+    # something is wrong.
+    if not goal_found:
+        raise ValueError("Goal not found in search.")
+    
+    # Construct the path from the predecessors dictionary.
+    return get_path(origin_key, goal_key, predecessors)   
