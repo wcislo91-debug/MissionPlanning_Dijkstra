@@ -1,0 +1,61 @@
+# For a given graph, origin vertex key, and goal vertex key,
+# computes the shortest path in the graph from the origin vertex
+# to the goal vertex using Dijkstra's algorithm.
+# Returns the shortest path as a list of vertex keys.
+def dijkstras_search(origin_key, goal_key, graph):
+    
+    # The priority queue of open vertices we've reached.
+    # Keys are the vertex keys, vals are the distances.
+    open_queue = priority_dict.priority_dict({})
+    print(open_queue)
+    
+    # The dictionary of closed vertices we've processed.
+    closed_dict = {}
+    
+    # The dictionary of predecessors for each vertex.
+    predecessors = {}
+    
+    # Add the origin to the open queue.
+    open_queue[origin_key] = 0.0
+    predecessors[origin_key] = None
+
+    # Iterate through the open queue, until we find the goal.
+    # Each time, perform a Dijkstra's update on the queue.
+    # TODO: Implement the Dijstra update loop.
+    goal_found = False
+    while (open_queue):
+        # Pop vertex with smallest distance
+        current_vertex, current_dist = open_queue.popitem()
+
+        # Mark as closed (finalized)
+        closed_dict[current_vertex] = current_dist
+        
+        # If we reached the goal → stop early
+        if current_vertex == goal_key:
+            goal_found = True
+            break
+            
+        # Relax all outgoing edges
+        for _, neighbor, data in graph.out_edges(current_vertex, data=True):
+
+            # Weight = edge length (OSMnx standard)
+            weight = data.get("length", 1.0)
+
+            new_dist = current_dist + weight
+
+            # If neighbor already finalized → skip
+            if neighbor in closed_dict:
+                continue
+
+            # If neighbor not in queue OR new distance is better → update
+            if (neighbor not in open_queue) or (new_dist < open_queue[neighbor]):
+                open_queue[neighbor] = new_dist
+                predecessors[neighbor] = current_vertex
+    
+    # If we get through entire priority queue without finding the goal,
+    # something is wrong.
+    if not goal_found:
+        raise ValueError("Goal not found in search.")
+    
+    # Construct the path from the predecessors dictionary.
+    return get_path(origin_key, goal_key, predecessors)                
