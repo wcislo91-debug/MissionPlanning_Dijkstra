@@ -23,31 +23,36 @@ def dijkstras_search(origin_key, goal_key, graph):
     # Each time, perform a Dijkstra's update on the queue.
     # TODO: Implement the Dijstra update loop.
     goal_found = False
-    while (open_queue):
-        # Pop vertex with smallest distance
-        current_vertex, current_dist = open_queue.popitem()
 
-        # Mark as closed (finalized)
+    while open_queue:
+
+        # Get smallest item (may be key OR (key, priority))
+        item = open_queue.smallest()
+
+        if isinstance(item, tuple) and len(item) == 2:
+            current_vertex, current_dist = item
+        else:
+            current_vertex = item
+            current_dist = open_queue[current_vertex]
+
+        # Remove from queue
+        del open_queue[current_vertex]
+
         closed_dict[current_vertex] = current_dist
-        
-        # If we reached the goal → stop early
+
         if current_vertex == goal_key:
             goal_found = True
             break
-            
-        # Relax all outgoing edges
+
+        # Relax edges
         for _, neighbor, data in graph.out_edges(current_vertex, data=True):
 
-            # Weight = edge length (OSMnx standard)
             weight = data.get("length", 1.0)
-
             new_dist = current_dist + weight
 
-            # If neighbor already finalized → skip
             if neighbor in closed_dict:
                 continue
 
-            # If neighbor not in queue OR new distance is better → update
             if (neighbor not in open_queue) or (new_dist < open_queue[neighbor]):
                 open_queue[neighbor] = new_dist
                 predecessors[neighbor] = current_vertex
